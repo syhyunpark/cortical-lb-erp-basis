@@ -58,19 +58,27 @@ python make_fsaverage_lb_dictionary.py \
 ```
 This script:
 	1.	Creates an mne.Info with the channels in canonical_30.txt
+	
 	2.	Attaches the standard_1005 montage (ignoring missing labels)
+	
 	3.	Sets up an fsaverage source space at the chosen spacing (e.g., ico4)
+	
 	4.	Builds a 3-layer BEM model (skin, skull, brain; 0.3/0.006/0.3 S/m)
+	
 	5.	Computes a fixed-orientation EEG forward matrix ($G \in \mathbb{R}^{M \times V_{\text{src}}}$)
+	
 	6.	Calls get_phi_fsaverage(...) to compute the first K symmetric LB eigenmodes ($\Phi_{\text{sym}} \in \mathbb{R}^{V_{\text{src}} \times K}$)
+	
 	7.	Forms the sensor dictionary ($D = G \Phi_{\text{sym}} \in \mathbb{R}^{M \times K}$)
 
 It writes two NPZ files under outdir/derivatives/Dict:
+
 	•	fsaverage_phi_sym_K{K}_{spacing}.npz  – cortical eigenmodes ($\Phi_{\text{sym}}$)
+	
 	•	fsaverage_D_sym_K{K}_M{M}_{spacing}.npz – LB sensor dictionary (D) with:
-	•	D        : array of shape (M, K)
-	•	channels : channel names
-	•	spacing, subject, K, combine metadata
+			- D        : array of shape (M, K)
+			- channels : channel names
+			-spacing, subject, K, combine metadata
 
 For the ERP-CORE analysis we used K=60 and the 30-channel canonical montage, but you can choose any K and any montage (as long as labels map to standard_1005).
 
