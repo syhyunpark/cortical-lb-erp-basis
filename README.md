@@ -9,7 +9,9 @@ This repository provides code to:
 2. **Add a spherical harmonics (SPH) comparator basis** on the same channels.
 3. **Reproduce the ERP-CORE analyses** from the manuscript: trial-averaged time–frequency (TF) span tests, mode-wise TF energy spectra, and ERP contrast alignment.
 
-The core idea is that instead of treating each electrode as an unrelated axis, we analyze evoked EEG in a **geometry-aligned basis** whose columns are the scalp projections of cortical LB eigenmodes (and SPH harmonics for comparison).
+The core idea is that instead of treating each electrode as an unrelated axis, we analyze evoked EEG in a **geometry-aligned basis** whose columns are the scalp projections of cortical LB eigenmodes (and SPH harmonics for comparison). 
+
+In addition to the ERP-CORE analyses, the repository also includes a minimal repeated-run retrieval application for continuous naturalistic-viewing EEG based on the same fixed sensor-space representations.
 
 ---
 
@@ -212,3 +214,40 @@ python make_fsaverage_lb_dictionary.py \
 	3.	Use the resulting NPZ (LB-only or LB+SPH) as the input --dict-npz for your own projection / span / energy analyses.
 
 The geometry-anchored part (LB on fsaverage + BEM forward) stays the same; only the row selection (channels) changes with the montage. The LB dictionary builder is montage-agnostic: given a text file of channel names, it recomputes the fsaverage LB basis for that layout.
+
+
+
+
+## 6. Exploratory naturalistic-viewing repeated-run retrieval
+
+The repository also includes a minimal application of the same LB/SPH/PCA sensor-space representations to an independent naturalistic-viewing EEG dataset with repeated presentations of the same audiovisual clips. The goal is not to provide a full preprocessing pipeline for the raw simultaneous EEG--fMRI data, but rather to show how the fixed sensor-space bases can be used for a practical repeated-run matching task in continuous EEG.
+
+The naturalistic-viewing scripts assume that you have already:
+
+1. exported run-level EEG features on a shared **61-channel master montage** (with run-specific channel masks),
+2. built an **LB+SPH dictionary** on that same 61-channel montage, and
+3. built a shared **PCA basis** from the same exported features.
+
+In the manuscript application, repeated-run retrieval was performed within subject and within session, using non-overlapping 5 s windows, a 4-bin frequency summary (2--4, 4--8, 8--13, and 13--30 Hz), ridge projection into the shared bases, and aligned-window cosine similarity.
+
+### 6.1. Repeated-run retrieval
+
+```bash
+python natview_repeated_run_retrieval_clean.py \
+  --summary-csv /path/to/derived/natview_eeg_features_master61_masked_5s/feature_export_summary.csv \
+  --lb-sph-npz /path/to/natview_lb_dictionary_master61/derivatives/Dict/lb_sph_master61_ico4.npz \
+  --pca-npz /path/to/derived/natview_retrieval_clean_5s/natview_pca_master61_dense_5s.npz \
+  --outdir /path/to/derived/natview_retrieval_clean_5s_bands4 \
+  --k-values 5 10 15 20 \
+  --ridge-alpha 0.1 \
+  --min-windows 20 \
+  --min-present-channels 58 \
+  --min-pairs-per-session 2 \
+  --min-common-windows 30 \
+  --include-raw-baseline \
+  --bootstrap-B 2000 \
+  --alpha 0.1 \
+  --k-compare 10 \
+  --fmin 2.0 \
+  --fmax 30.0 \
+  --freq-bin-edges 2,4,8,13,30
